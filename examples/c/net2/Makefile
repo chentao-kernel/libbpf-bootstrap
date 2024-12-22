@@ -37,6 +37,6 @@ $(TARGET): $(LIBBPF_OBJS) $(LIBELF_OBJS) $(OBJS)
 
 # 清理编译生成的文件
 clean:
-	rm -f $(OBJS) $(TARGET) *.o *.os
+	rm -f $(OBJS) $(TARGET) *.o *.os libbpf.a
 
 .PHONY: all clean
