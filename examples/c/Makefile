@@ -25,7 +25,7 @@ CFLAGS := -g -Wall
 ALL_LDFLAGS := $(LDFLAGS) $(EXTRA_LDFLAGS)
 
 APPS = net bootstrap uprobe kprobe fentry \
-       usdt sockfilter tc ksyscall task_iter lsm
+       sockfilter tc task_iter lsm
 
 CARGO ?= $(shell which cargo)
 ifeq ($(strip $(CARGO)),)
