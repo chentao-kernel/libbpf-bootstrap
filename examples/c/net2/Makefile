@@ -1,5 +1,8 @@
 # Makefile for building libnet.so
+.ONESHELL:
+SHELL = /bin/bash
 
+CLANG_FMT := clang-format-12
 CC = gcc
 AR = ar
 SOURCE = ../.output
@@ -40,3 +43,8 @@ clean:
 	rm -f $(OBJS) $(TARGET) *.o *.os libbpf.a
 
 .PHONY: all clean
+
+C_FILES_TO_BE_CHECKED = $(shell find . -regextype posix-extended -regex '.*\.(h|c)' ! -regex '.*(headers|output)\/.*' | xargs)
+fmt-fix:
+	@echo "Fixing C and eBPF files and headers formatting..."
+	$(CLANG_FMT) -i --verbose $(C_FILES_TO_BE_CHECKED)
