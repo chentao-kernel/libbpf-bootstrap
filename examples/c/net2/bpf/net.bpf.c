@@ -1458,6 +1458,43 @@ int BPF_KRETPROBE(kretprobe_sock_alloc)
 	return 0;
 }
 
+// int sock_sendmsg(struct socket *sock, struct msghdr *msg)
+// called by write/writev/send/sendmsg
+SEC("kprobe/sock_sendmsg")
+int kprobe_sock_sendmsg(struct pt_regs *ctx)
+{
+	uint64_t id = bpf_get_current_pid_tgid();
+	struct data_param_t *write_param =
+		bpf_map_lookup_elem(&write_param_map, &id);
+	if (write_param != NULL) {
+		write_param->real_conn = true;
+	}
+
+#ifdef NET_TEST
+	test_bpf_syscall(ctx, id, 0, NULL, 0, 11);
+#endif
+
+	return 0;
+}
+
+// int sock_sendmsg(struct socket *sock, struct msghdr *msg, int flags)
+SEC("kprobe/sock_recvmsg")
+int kprobe_sock_recvmsg(struct pt_regs *ctx)
+{
+	uint64_t id = bpf_get_current_pid_tgid();
+	struct data_param_t *read_param =
+		bpf_map_lookup_elem(&read_param_map, &id);
+	if (read_param != NULL) {
+		read_param->real_conn = true;
+	}
+
+#ifdef NET_TEST
+	test_bpf_syscall(ctx, id, 0, NULL, 0, 12);
+#endif
+
+	return 0;
+}
+
 SEC("kprobe/security_socket_sendmsg")
 int BPF_KPROBE(kprobe_security_socket_sendmsg)
 {
