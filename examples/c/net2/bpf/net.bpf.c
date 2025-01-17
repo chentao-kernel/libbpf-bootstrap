@@ -154,6 +154,36 @@ struct {
  ***********
  */
 
+struct trace_event_raw_sys_enter_comp {
+	struct trace_entry ent;
+	long int id;
+	long unsigned int args[6];
+	char __data[0];
+};
+
+struct trace_event_raw_sys_exit_comp {
+	struct trace_entry ent;
+	long int id;
+	long int ret;
+	char __data[0];
+};
+
+struct user_msghdr_comp {
+	void *msg_name;
+	int msg_namelen;
+	struct iovec *msg_iov;
+	__kernel_size_t msg_iovlen;
+	void *msg_control;
+	__kernel_size_t msg_controllen;
+	unsigned int msg_flags;
+};
+
+struct mmsghdr_comp {
+	struct user_msghdr_comp msg_hdr;
+	unsigned int msg_len;
+};
+
+/*
 static __always_inline void set_addr_pair_by_sock(struct sock *sk,
 						  struct addr_pair_t *ap)
 {
@@ -162,6 +192,7 @@ static __always_inline void set_addr_pair_by_sock(struct sock *sk,
 	BPF_CORE_READ_INTO(&ap->saddr, sk, __sk_common.skc_rcv_saddr);
 	BPF_CORE_READ_INTO(&ap->sport, sk, __sk_common.skc_num);
 }
+*/
 
 static __always_inline enum support_tgid_e match_tgid(const uint32_t tgid)
 {
@@ -901,7 +932,7 @@ need_trace_protocol(const struct connect_info_t *conn_info)
 	return config;
 }
 
-static __always_inline void add_one_conn(struct trace_event_raw_sys_exit *ctx,
+static __always_inline void add_one_conn(struct trace_event_raw_sys_exit_comp *ctx,
 					 const struct sockaddr *addr,
 					 const struct socket *socket,
 					 struct tg_info_t *tg_role)
@@ -944,7 +975,7 @@ static __always_inline void add_one_conn(struct trace_event_raw_sys_exit *ctx,
 }
 
 static __always_inline void
-output_conn_stats(struct trace_event_raw_sys_exit *ctx,
+output_conn_stats(struct trace_event_raw_sys_exit_comp *ctx,
 		  struct connect_info_t *conn_info,
 		  enum support_direction_e direction, ssize_t return_bytes)
 {
@@ -985,7 +1016,7 @@ output_conn_stats(struct trace_event_raw_sys_exit *ctx,
 }
 
 static __always_inline void
-add_close_event(struct trace_event_raw_sys_exit *ctx,
+add_close_event(struct trace_event_raw_sys_exit_comp *ctx,
 		struct connect_info_t *conn_info)
 {
 	struct conn_ctrl_event_t ctrl_event = {};
@@ -1002,7 +1033,7 @@ add_close_event(struct trace_event_raw_sys_exit *ctx,
 }
 
 static __always_inline void
-trace_exit_connect(struct trace_event_raw_sys_exit *ctx, uint64_t id,
+trace_exit_connect(struct trace_event_raw_sys_exit_comp *ctx, uint64_t id,
 		   const struct conn_param_t *conn_param)
 {
 	uint32_t tgid = id >> 32;
@@ -1020,7 +1051,7 @@ trace_exit_connect(struct trace_event_raw_sys_exit *ctx, uint64_t id,
 }
 
 static __always_inline void
-trace_reserve_conn(struct trace_event_raw_sys_exit *ctx, uint64_t id,
+trace_reserve_conn(struct trace_event_raw_sys_exit_comp *ctx, uint64_t id,
 		   const struct conn_param_t *conn_param)
 {
 	uint32_t tgid = id >> 32;
@@ -1042,7 +1073,7 @@ trace_reserve_conn(struct trace_event_raw_sys_exit *ctx, uint64_t id,
 }
 
 static __always_inline void
-trace_exit_close(struct trace_event_raw_sys_exit *ctx, uint64_t id,
+trace_exit_close(struct trace_event_raw_sys_exit_comp *ctx, uint64_t id,
 		 const struct close_param_t *close_param)
 {
 	uint32_t tgid = id >> 32;
@@ -1088,7 +1119,7 @@ trace_exit_close(struct trace_event_raw_sys_exit *ctx, uint64_t id,
 }
 
 static __always_inline void
-trace_exit_accept(struct trace_event_raw_sys_exit *ctx, uint64_t id,
+trace_exit_accept(struct trace_event_raw_sys_exit_comp *ctx, uint64_t id,
 		  const struct accept_param_t *accept_param)
 {
 	uint32_t tgid = id >> 32;
@@ -1107,7 +1138,7 @@ trace_exit_accept(struct trace_event_raw_sys_exit *ctx, uint64_t id,
 }
 
 static __always_inline void
-perf_output_user(struct trace_event_raw_sys_exit *ctx,
+perf_output_user(struct trace_event_raw_sys_exit_comp *ctx,
 		 const enum support_direction_e direction, const char *buf,
 		 size_t buf_size, struct connect_info_t *conn_info,
 		 struct conn_data_event_t *event)
@@ -1138,7 +1169,7 @@ perf_output_user(struct trace_event_raw_sys_exit *ctx,
 	}
 }
 
-static __always_inline void output_buf(struct trace_event_raw_sys_exit *ctx,
+static __always_inline void output_buf(struct trace_event_raw_sys_exit_comp *ctx,
 				       const enum support_direction_e direction,
 				       const char *buf, const size_t buf_size,
 				       struct connect_info_t *conn_info,
@@ -1162,7 +1193,7 @@ static __always_inline void output_buf(struct trace_event_raw_sys_exit *ctx,
 }
 
 static __always_inline void
-output_iovec(struct trace_event_raw_sys_exit *ctx,
+output_iovec(struct trace_event_raw_sys_exit_comp *ctx,
 	     const enum support_direction_e direction, const struct iovec *iov,
 	     const size_t iovlen, const size_t total_size,
 	     struct connect_info_t *conn_info, struct conn_data_event_t *event)
@@ -1185,7 +1216,7 @@ output_iovec(struct trace_event_raw_sys_exit *ctx,
 }
 
 static __always_inline void
-trace_exit_data(struct trace_event_raw_sys_exit *ctx, uint64_t id,
+trace_exit_data(struct trace_event_raw_sys_exit_comp *ctx, uint64_t id,
 		const enum support_direction_e direction,
 		const struct data_param_t *data_param, ssize_t return_bytes,
 		bool vecs)
@@ -1308,7 +1339,7 @@ static __always_inline void test_bpf_syscall(void *ctx, uint64_t id, int32_t fd,
 
 SEC("tracepoint/syscalls/sys_enter_connect")
 // int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
-int tp_sys_enter_connect(struct trace_event_raw_sys_enter *ctx)
+int tp_sys_enter_connect(struct trace_event_raw_sys_enter_comp *ctx)
 {
 	uint64_t id = bpf_get_current_pid_tgid();
 	struct conn_param_t conn_param = {};
@@ -1324,7 +1355,7 @@ int tp_sys_enter_connect(struct trace_event_raw_sys_enter *ctx)
 
 SEC("tracepoint/syscalls/sys_exit_connect")
 // int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
-int tp_sys_exit_connect(struct trace_event_raw_sys_exit *ctx)
+int tp_sys_exit_connect(struct trace_event_raw_sys_exit_comp *ctx)
 {
 	uint64_t id = bpf_get_current_pid_tgid();
 	const struct conn_param_t *conn_param =
@@ -1342,7 +1373,7 @@ int tp_sys_exit_connect(struct trace_event_raw_sys_exit *ctx)
 
 SEC("tracepoint/syscalls/sys_enter_accept")
 // int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
-int tp_sys_enter_accept(struct trace_event_raw_sys_enter *ctx)
+int tp_sys_enter_accept(struct trace_event_raw_sys_enter_comp *ctx)
 {
 	uint64_t id = bpf_get_current_pid_tgid();
 	struct accept_param_t accept_param = {};
@@ -1356,7 +1387,7 @@ int tp_sys_enter_accept(struct trace_event_raw_sys_enter *ctx)
 }
 
 SEC("tracepoint/syscalls/sys_exit_accept")
-int tp_sys_exit_accept(struct trace_event_raw_sys_exit *ctx)
+int tp_sys_exit_accept(struct trace_event_raw_sys_exit_comp *ctx)
 {
 	uint64_t id = bpf_get_current_pid_tgid();
 	struct accept_param_t *accept_param =
@@ -1374,7 +1405,7 @@ int tp_sys_exit_accept(struct trace_event_raw_sys_exit *ctx)
 
 SEC("tracepoint/syscalls/sys_enter_accept4")
 // int accept4(int sockfd, struct sockaddr *addr, socklen_t *addrlen, int flags);
-int tp_sys_enter_accept4(struct trace_event_raw_sys_enter *ctx)
+int tp_sys_enter_accept4(struct trace_event_raw_sys_enter_comp *ctx)
 {
 	uint64_t id = bpf_get_current_pid_tgid();
 	struct accept_param_t accept_param = {};
@@ -1389,7 +1420,7 @@ int tp_sys_enter_accept4(struct trace_event_raw_sys_enter *ctx)
 }
 
 SEC("tracepoint/syscalls/sys_exit_accept4")
-int tp_sys_exit_accept4(struct trace_event_raw_sys_exit *ctx)
+int tp_sys_exit_accept4(struct trace_event_raw_sys_exit_comp *ctx)
 {
 	uint64_t id = bpf_get_current_pid_tgid();
 	struct accept_param_t *accept_param =
@@ -1407,7 +1438,7 @@ int tp_sys_exit_accept4(struct trace_event_raw_sys_exit *ctx)
 
 SEC("tracepoint/syscalls/sys_enter_close")
 // int close(int fd);
-int tp_sys_enter_close(struct trace_event_raw_sys_enter *ctx)
+int tp_sys_enter_close(struct trace_event_raw_sys_enter_comp *ctx)
 {
 	uint64_t id = bpf_get_current_pid_tgid();
 
@@ -1422,7 +1453,7 @@ int tp_sys_enter_close(struct trace_event_raw_sys_enter *ctx)
 }
 
 SEC("tracepoint/syscalls/sys_exit_close")
-int tp_sys_exit_close(struct trace_event_raw_sys_exit *ctx)
+int tp_sys_exit_close(struct trace_event_raw_sys_exit_comp *ctx)
 {
 	uint64_t id = bpf_get_current_pid_tgid();
 	const struct close_param_t *close_param =
@@ -1535,7 +1566,7 @@ int BPF_KPROBE(kprobe_security_socket_recvmsg)
 
 SEC("tracepoint/syscalls/sys_enter_write")
 // ssize_t write(int fd, const void *buf, size_t count);
-int tp_sys_enter_write(struct trace_event_raw_sys_enter *ctx)
+int tp_sys_enter_write(struct trace_event_raw_sys_enter_comp *ctx)
 {
 	uint64_t id = bpf_get_current_pid_tgid();
 	struct data_param_t write_param = {};
@@ -1551,7 +1582,7 @@ int tp_sys_enter_write(struct trace_event_raw_sys_enter *ctx)
 }
 
 SEC("tracepoint/syscalls/sys_exit_write")
-int tp_sys_exit_write(struct trace_event_raw_sys_exit *ctx)
+int tp_sys_exit_write(struct trace_event_raw_sys_exit_comp *ctx)
 {
 	uint64_t id = bpf_get_current_pid_tgid();
 	ssize_t return_bytes = ctx->ret;
@@ -1577,7 +1608,7 @@ int tp_sys_exit_write(struct trace_event_raw_sys_exit *ctx)
 
 SEC("tracepoint/syscalls/sys_enter_read")
 // ssize_t read(int fd, void *buf, size_t count);
-int tp_sys_enter_read(struct trace_event_raw_sys_enter *ctx)
+int tp_sys_enter_read(struct trace_event_raw_sys_enter_comp *ctx)
 {
 	uint64_t id = bpf_get_current_pid_tgid();
 	struct data_param_t read_param = {};
@@ -1593,7 +1624,7 @@ int tp_sys_enter_read(struct trace_event_raw_sys_enter *ctx)
 }
 
 SEC("tracepoint/syscalls/sys_exit_read")
-int tp_sys_exit_read(struct trace_event_raw_sys_exit *ctx)
+int tp_sys_exit_read(struct trace_event_raw_sys_exit_comp *ctx)
 {
 	uint64_t id = bpf_get_current_pid_tgid();
 	ssize_t return_bytes = ctx->ret;
@@ -1615,7 +1646,7 @@ int tp_sys_exit_read(struct trace_event_raw_sys_exit *ctx)
 SEC("tracepoint/syscalls/sys_enter_sendto")
 // ssize_t sendto(int sockfd, const void *buf, size_t len, int flags,
 //                const struct sockaddr *dest_addr, socklen_t addrlen);
-int tp_sys_enter_sendto(struct trace_event_raw_sys_enter *ctx)
+int tp_sys_enter_sendto(struct trace_event_raw_sys_enter_comp *ctx)
 {
 	uint64_t id = bpf_get_current_pid_tgid();
 	struct sockaddr addr;
@@ -1644,7 +1675,7 @@ int tp_sys_enter_sendto(struct trace_event_raw_sys_enter *ctx)
 }
 
 SEC("tracepoint/syscalls/sys_exit_sendto")
-int tp_sys_exit_sendto(struct trace_event_raw_sys_exit *ctx)
+int tp_sys_exit_sendto(struct trace_event_raw_sys_exit_comp *ctx)
 {
 	uint64_t id = bpf_get_current_pid_tgid();
 	ssize_t return_bytes = ctx->ret;
@@ -1678,7 +1709,7 @@ int tp_sys_exit_sendto(struct trace_event_raw_sys_exit *ctx)
 SEC("tracepoint/syscalls/sys_enter_recvfrom")
 // ssize_t recvfrom(int sockfd, void *buf, size_t len, int flags,
 //                  struct sockaddr *src_addr, socklen_t *addrlen);
-int tp_sys_enter_recvfrom(struct trace_event_raw_sys_enter *ctx)
+int tp_sys_enter_recvfrom(struct trace_event_raw_sys_enter_comp *ctx)
 {
 	uint64_t id = bpf_get_current_pid_tgid();
 	struct sockaddr addr;
@@ -1707,7 +1738,7 @@ int tp_sys_enter_recvfrom(struct trace_event_raw_sys_enter *ctx)
 }
 
 SEC("tracepoint/syscalls/sys_exit_recvfrom")
-int tp_sys_exit_recvfrom(struct trace_event_raw_sys_exit *ctx)
+int tp_sys_exit_recvfrom(struct trace_event_raw_sys_exit_comp *ctx)
 {
 	uint64_t id = bpf_get_current_pid_tgid();
 	ssize_t return_bytes = ctx->ret;
@@ -1735,23 +1766,23 @@ int tp_sys_exit_recvfrom(struct trace_event_raw_sys_exit *ctx)
 
 SEC("tracepoint/syscalls/sys_enter_sendmsg")
 // ssize_t sendmsg(int sockfd, const struct msghdr *msg, int flags);
-int tp_sys_enter_sendmsg(struct trace_event_raw_sys_enter *ctx)
+int tp_sys_enter_sendmsg(struct trace_event_raw_sys_enter_comp *ctx)
 {
 	uint64_t id = bpf_get_current_pid_tgid();
-	struct user_msghdr msghdr;
-	bpf_probe_read(&msghdr, sizeof(struct user_msghdr),
-		       (struct user_msghdr *)ctx->args[1]);
-	struct user_msghdr *pmsghdr = &msghdr;
+	struct user_msghdr_comp msghdr;
+	bpf_probe_read(&msghdr, sizeof(struct user_msghdr_comp),
+		       (struct user_msghdr_comp *)ctx->args[1]);
+	struct user_msghdr_comp *pmsghdr = &msghdr;
 	struct sockaddr msg_name;
-	BPF_CORE_READ_INTO(&msg_name, pmsghdr, msg_name);
+	bpf_probe_read(&msg_name, sizeof(struct sockaddr), msghdr.msg_name);
 	struct sockaddr *pmsg_name = &msg_name;
 
 	if (pmsghdr != NULL) {
 		if (pmsg_name != NULL) {
 			struct conn_param_t conn_param = {};
 			conn_param.fd = ctx->args[0];
-			// conn_param.addr = msghdr->msg_name;
-			BPF_CORE_READ_INTO(&conn_param.addr, pmsghdr, msg_name);
+			// BPF_CORE_READ_INTO(&conn_param.addr, pmsghdr, msg_name);
+			bpf_probe_read(&conn_param.addr, sizeof(struct sockaddr), msghdr.msg_name);
 			bpf_map_update_elem(&conn_param_map, &id, &conn_param,
 					    BPF_ANY);
 		}
@@ -1759,10 +1790,10 @@ int tp_sys_enter_sendmsg(struct trace_event_raw_sys_enter *ctx)
 		struct data_param_t write_param = {};
 		write_param.syscall_func = FuncSendMsg;
 		write_param.fd = ctx->args[0];
-		// write_param.iov = msghdr->msg_iov;
-		// write_param.iovlen = msghdr->msg_iovlen;
-		BPF_CORE_READ_INTO(&write_param.iov, pmsghdr, msg_iov);
-		BPF_CORE_READ_INTO(&write_param.iovlen, pmsghdr, msg_iovlen);
+		write_param.iov = msghdr.msg_iov;
+		write_param.iovlen = msghdr.msg_iovlen;
+		// BPF_CORE_READ_INTO(&write_param.iov, pmsghdr, msg_iov);
+		// BPF_CORE_READ_INTO(&write_param.iovlen, pmsghdr, msg_iovlen);
 		bpf_map_update_elem(&write_param_map, &id, &write_param,
 				    BPF_ANY);
 	}
@@ -1774,7 +1805,7 @@ int tp_sys_enter_sendmsg(struct trace_event_raw_sys_enter *ctx)
 }
 
 SEC("tracepoint/syscalls/sys_exit_sendmsg")
-int tp_sys_exit_sendmsg(struct trace_event_raw_sys_exit *ctx)
+int tp_sys_exit_sendmsg(struct trace_event_raw_sys_exit_comp *ctx)
 {
 	uint64_t id = bpf_get_current_pid_tgid();
 	ssize_t return_bytes = ctx->ret;
@@ -1808,20 +1839,20 @@ int tp_sys_exit_sendmsg(struct trace_event_raw_sys_exit *ctx)
 
 SEC("tracepoint/syscalls/sys_enter_sendmmsg")
 // ssize_t sendmmsg(int sockfd, const struct mmsghdr *msg, unsigned int vlen, int flags);
-int tp_sys_enter_sendmmsg(struct trace_event_raw_sys_enter *ctx)
+int tp_sys_enter_sendmmsg(struct trace_event_raw_sys_enter_comp *ctx)
 {
 	uint64_t id = bpf_get_current_pid_tgid();
-	struct mmsghdr msghdr;
+	struct mmsghdr_comp msghdr;
 	uint32_t vlen;
-	struct mmsghdr *p = (struct mmsghdr *)ctx->args[1];
+	struct mmsghdr_comp *p = (struct mmsghdr_comp *)ctx->args[1];
 
 	/* todo: change this coding style later */
-	bpf_probe_read(&msghdr, sizeof(struct mmsghdr),
-		       (struct mmsghdr *)ctx->args[1]);
+	bpf_probe_read(&msghdr, sizeof(struct mmsghdr_comp),
+		       (struct mmsghdr_comp *)ctx->args[1]);
 	vlen = ctx->args[2];
-	struct mmsghdr *pmsghdr = &msghdr;
+	struct mmsghdr_comp *pmsghdr = &msghdr;
 	struct sockaddr msg_name;
-	BPF_CORE_READ_INTO(&msg_name, p, msg_hdr.msg_name);
+	bpf_probe_read(&msg_name, sizeof(struct sockaddr), msghdr.msg_hdr.msg_name);
 	struct sockaddr *pmsg_name = &msg_name;
 
 	if (pmsghdr != NULL && vlen >= 1 && p != NULL) {
@@ -1829,19 +1860,15 @@ int tp_sys_enter_sendmmsg(struct trace_event_raw_sys_enter *ctx)
 			struct conn_param_t conn_param = {};
 			conn_param.fd = ctx->args[0];
 			// conn_param.addr = msghdr->msg_name;
-			BPF_CORE_READ_INTO(&conn_param.addr, pmsghdr,
-					   msg_hdr.msg_name);
+			bpf_probe_read(&conn_param.addr, sizeof(conn_param.addr), msghdr.msg_hdr.msg_name);
 			bpf_map_update_elem(&conn_param_map, &id, &conn_param,
 					    BPF_ANY);
 		}
 		struct data_param_t write_param = {};
 		write_param.syscall_func = FuncSendMmsg;
 		write_param.fd = ctx->args[0];
-		// write_param.iov = msghdr->msg_iov;
-		// write_param.iovlen = msghdr->msg_iovlen;
-		BPF_CORE_READ_INTO(&write_param.iov, pmsghdr, msg_hdr.msg_iov);
-		BPF_CORE_READ_INTO(&write_param.iovlen, pmsghdr,
-				   msg_hdr.msg_iovlen);
+		write_param.iov = msghdr.msg_hdr.msg_iov;
+		write_param.iovlen = msghdr.msg_hdr.msg_iovlen;
 		/*
      * msg_len contains the size of the received message, here the value is 0,
      * so we keep the msg_len address, when the sendmmsg exit, the value updated.
@@ -1858,7 +1885,7 @@ int tp_sys_enter_sendmmsg(struct trace_event_raw_sys_enter *ctx)
 }
 
 SEC("tracepoint/syscalls/sys_exit_sendmmsg")
-int tp_sys_exit_sendmmsg(struct trace_event_raw_sys_exit *ctx)
+int tp_sys_exit_sendmmsg(struct trace_event_raw_sys_exit_comp *ctx)
 {
 	uint64_t id = bpf_get_current_pid_tgid();
 	ssize_t msgs_num = ctx->ret;
@@ -1895,26 +1922,25 @@ SEC("tracepoint/syscalls/sys_enter_recvmmsg")
  *  	unsigned int msg_len;
  *  }
  */
-int tp_sys_enter_recvmmsg(struct trace_event_raw_sys_enter *ctx)
+int tp_sys_enter_recvmmsg(struct trace_event_raw_sys_enter_comp *ctx)
 {
 	uint64_t id = bpf_get_current_pid_tgid();
-	struct mmsghdr msghdr;
+	struct mmsghdr_comp msghdr;
 	bpf_probe_read(&msghdr, sizeof(struct mmsghdr),
 		       (struct mmsghdr *)ctx->args[1]);
-	struct mmsghdr *pmsghdr = &msghdr;
+	struct mmsghdr_comp *pmsghdr = &msghdr;
 	struct sockaddr msg_name;
 	struct sockaddr *pmsg_name = &msg_name;
 	uint32_t vlen = ctx->args[2];
-	struct mmsghdr *p = (struct mmsghdr *)ctx->args[1];
-	BPF_CORE_READ_INTO(&msg_name, pmsghdr, msg_hdr.msg_name);
+	struct mmsghdr_comp *p = (struct mmsghdr_comp *)ctx->args[1];
+	bpf_probe_read(&msg_name, sizeof(struct sockaddr), msghdr.msg_hdr.msg_name);
 
 	if (pmsghdr != NULL && vlen >= 1 && p != NULL) {
 		if (pmsg_name != NULL) {
 			struct conn_param_t conn_param = {};
 			conn_param.fd = ctx->args[0];
 			// conn_param.addr = p->msg_name;
-			BPF_CORE_READ_INTO(&conn_param.addr, pmsghdr,
-					   msg_hdr.msg_name);
+			bpf_probe_read(&conn_param.addr, sizeof(conn_param.addr), msghdr.msg_hdr.msg_name);
 			bpf_map_update_elem(&conn_param_map, &id, &conn_param,
 					    BPF_ANY);
 		}
@@ -1922,11 +1948,10 @@ int tp_sys_enter_recvmmsg(struct trace_event_raw_sys_enter *ctx)
 		struct data_param_t read_param = {};
 		read_param.syscall_func = FuncRecvMmsg;
 		read_param.fd = ctx->args[0];
-		// read_param.iov = msghdr->msg_iov;
-		// read_param.iovlen = msghdr->msg_iovlen;
-		BPF_CORE_READ_INTO(&read_param.iov, pmsghdr, msg_hdr.msg_iov);
-		BPF_CORE_READ_INTO(&read_param.iovlen, pmsghdr,
-				   msg_hdr.msg_iovlen);
+		read_param.iov = msghdr.msg_hdr.msg_iov;
+		read_param.iovlen = msghdr.msg_hdr.msg_iovlen;
+		// BPF_CORE_READ_INTO(&read_param.iov, pmsghdr, msg_hdr.msg_iov);
+		// BPF_CORE_READ_INTO(&read_param.iovlen, pmsghdr, msg_hdr.msg_iovlen);
 		read_param.msg_len = &p->msg_len;
 		bpf_map_update_elem(&read_param_map, &id, &read_param, BPF_ANY);
 	}
@@ -1938,7 +1963,7 @@ int tp_sys_enter_recvmmsg(struct trace_event_raw_sys_enter *ctx)
 }
 
 SEC("tracepoint/syscalls/sys_exit_recvmmsg")
-int tp_sys_exit_recvmmsg(struct trace_event_raw_sys_exit *ctx)
+int tp_sys_exit_recvmmsg(struct trace_event_raw_sys_exit_comp *ctx)
 {
 	uint64_t id = bpf_get_current_pid_tgid();
 	int msgs_num = ctx->ret;
@@ -1970,15 +1995,15 @@ int tp_sys_exit_recvmmsg(struct trace_event_raw_sys_exit *ctx)
 
 SEC("tracepoint/syscalls/sys_enter_recvmsg")
 // ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags);
-int tp_sys_enter_recvmsg(struct trace_event_raw_sys_enter *ctx)
+int tp_sys_enter_recvmsg(struct trace_event_raw_sys_enter_comp *ctx)
 {
 	uint64_t id = bpf_get_current_pid_tgid();
-	struct user_msghdr msghdr;
-	bpf_probe_read(&msghdr, sizeof(struct user_msghdr),
-		       (struct user_msghdr *)ctx->args[1]);
-	struct user_msghdr *pmsghdr = &msghdr;
+	struct user_msghdr_comp msghdr;
+	bpf_probe_read(&msghdr, sizeof(struct user_msghdr_comp), (struct user_msghdr_comp *)ctx->args[1]);
+	struct user_msghdr_comp *pmsghdr = &msghdr;
 	struct sockaddr msg_name;
-	BPF_CORE_READ_INTO(&msg_name, pmsghdr, msg_name);
+	// BPF_CORE_READ_INTO(&msg_name, pmsghdr, msg_name);
+	bpf_probe_read(&msg_name, sizeof(msg_name), msghdr.msg_name);
 	struct sockaddr *pmsg_name = &msg_name;
 
 	if (pmsghdr != NULL) {
@@ -1986,7 +2011,8 @@ int tp_sys_enter_recvmsg(struct trace_event_raw_sys_enter *ctx)
 			struct conn_param_t conn_param = {};
 			conn_param.fd = ctx->args[0];
 			// conn_param.addr = msghdr->msg_name;
-			BPF_CORE_READ_INTO(&conn_param.addr, pmsghdr, msg_name);
+			// BPF_CORE_READ_INTO(&conn_param.addr, pmsghdr, msg_name);
+			bpf_probe_read(&conn_param.addr, sizeof(conn_param.addr), msghdr.msg_name);
 			bpf_map_update_elem(&conn_param_map, &id, &conn_param,
 					    BPF_ANY);
 		}
@@ -1994,10 +2020,10 @@ int tp_sys_enter_recvmsg(struct trace_event_raw_sys_enter *ctx)
 		struct data_param_t read_param = {};
 		read_param.syscall_func = FuncRecvMsg;
 		read_param.fd = ctx->args[0];
-		// read_param.iov = msghdr->msg_iov;
-		// read_param.iovlen = msghdr->msg_iovlen;
-		BPF_CORE_READ_INTO(&read_param.iov, pmsghdr, msg_iov);
-		BPF_CORE_READ_INTO(&read_param.iovlen, pmsghdr, msg_iovlen);
+		read_param.iov = msghdr.msg_iov;
+		read_param.iovlen = msghdr.msg_iovlen;
+		// BPF_CORE_READ_INTO(&read_param.iov, pmsghdr, msg_iov);
+		// BPF_CORE_READ_INTO(&read_param.iovlen, pmsghdr, msg_iovlen);
 		bpf_map_update_elem(&read_param_map, &id, &read_param, BPF_ANY);
 	}
 
@@ -2138,7 +2164,7 @@ int update_conn_addr_probe(struct pt_regs *ctx)
 }
 
 SEC("tracepoint/syscalls/sys_exit_recvmsg")
-int tp_sys_exit_recvmsg(struct trace_event_raw_sys_exit *ctx)
+int tp_sys_exit_recvmsg(struct trace_event_raw_sys_exit_comp *ctx)
 {
 	uint64_t id = bpf_get_current_pid_tgid();
 	ssize_t return_bytes = ctx->ret;
@@ -2167,7 +2193,7 @@ int tp_sys_exit_recvmsg(struct trace_event_raw_sys_exit *ctx)
 
 SEC("tracepoint/syscalls/sys_enter_writev")
 // ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
-int tp_sys_enter_writev(struct trace_event_raw_sys_enter *ctx)
+int tp_sys_enter_writev(struct trace_event_raw_sys_enter_comp *ctx)
 {
 	uint64_t id = bpf_get_current_pid_tgid();
 	struct data_param_t write_param = {};
@@ -2184,7 +2210,7 @@ int tp_sys_enter_writev(struct trace_event_raw_sys_enter *ctx)
 }
 
 SEC("tracepoint/syscalls/sys_exit_writev")
-int tp_sys_exit_writev(struct trace_event_raw_sys_exit *ctx)
+int tp_sys_exit_writev(struct trace_event_raw_sys_exit_comp *ctx)
 {
 	uint64_t id = bpf_get_current_pid_tgid();
 	ssize_t return_bytes = ctx->ret;
@@ -2210,7 +2236,7 @@ int tp_sys_exit_writev(struct trace_event_raw_sys_exit *ctx)
 
 SEC("tracepoint/syscalls/sys_enter_readv")
 // ssize_t readv(int fd, const struct iovec *iov, int iovcnt);
-int tp_sys_enter_readv(struct trace_event_raw_sys_enter *ctx)
+int tp_sys_enter_readv(struct trace_event_raw_sys_enter_comp *ctx)
 {
 	uint64_t id = bpf_get_current_pid_tgid();
 	struct data_param_t read_param = {};
@@ -2227,7 +2253,7 @@ int tp_sys_enter_readv(struct trace_event_raw_sys_enter *ctx)
 }
 
 SEC("tracepoint/syscalls/sys_exit_readv")
-int tp_sys_exit_readv(struct trace_event_raw_sys_exit *ctx)
+int tp_sys_exit_readv(struct trace_event_raw_sys_exit_comp *ctx)
 {
 	uint64_t id = bpf_get_current_pid_tgid();
 	ssize_t return_bytes = ctx->ret;
@@ -2272,7 +2298,7 @@ bool trace_allowed(u32 tgid, u32 pid)
 }
 
 SEC("tracepoint/syscalls/sys_enter_open")
-int tracepoint__syscalls__sys_enter_open(struct trace_event_raw_sys_enter* ctx)
+int tracepoint__syscalls__sys_enter_open(struct trace_event_raw_sys_enter_comp* ctx)
 {
 	u64 id = bpf_get_current_pid_tgid();
 	/* use kernel terminology here for tgid/pid: */
@@ -2289,7 +2315,7 @@ int tracepoint__syscalls__sys_enter_open(struct trace_event_raw_sys_enter* ctx)
 	return 0;
 }
 static __always_inline
-int trace_exit(struct trace_event_raw_sys_exit* ctx)
+int trace_exit(struct trace_event_raw_sys_exit_comp* ctx)
 {
 	struct event event = {};
 	struct args_t *ap;
@@ -2321,7 +2347,7 @@ cleanup:
 }
 
 SEC("tracepoint/syscalls/sys_exit_open")
-int tracepoint__syscalls__sys_exit_open(struct trace_event_raw_sys_exit* ctx)
+int tracepoint__syscalls__sys_exit_open(struct trace_event_raw_sys_exit_comp* ctx)
 {
 	return trace_exit(ctx);
 }
