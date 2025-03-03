@@ -70,7 +70,7 @@ $(call allow-override,CC,$(CROSS_COMPILE)cc)
 $(call allow-override,LD,$(CROSS_COMPILE)ld)
 
 .PHONY: all
-all: $(APPS)
+all: $(APPS) bpfstat
 
 .PHONY: clean
 clean:
@@ -131,6 +131,8 @@ $(APPS): %: $(OUTPUT)/%.o $(LIBBPF_OBJ) | $(OUTPUT)
 	$(call msg,BINARY,$@)
 	$(Q)$(CC) $(CFLAGS) $^ $(ALL_LDFLAGS) -lelf -lz -o $@
 
+bpfstat: bpfstat.c $(LIBBPF_OBJ)
+	$(Q)$(CC) $(CFLAGS) $(INCLUDES) $^ $(ALL_LDFLAGS) -lelf -lz -o $@
 # delete failed targets
 .DELETE_ON_ERROR:
 
